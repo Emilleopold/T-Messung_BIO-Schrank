@@ -74,6 +74,18 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);   // select the pins used on the LCD panel
 dht11 DHT11;
 #define DHT11PIN 2
 
+  float TempOld = 0.0;
+  float TempAct = 0.0;
+  float TempMax = 0.0;
+  float TempMin = 999.0;
+  float HumiOld = 0.0; 
+  float HumiAct = 0.0;
+  float HumiMax = 0.0;
+  float HumiMin = 999.0;
+  long Counter = 0;
+  boolean Toggle = false;
+
+
 void setup() {
   Serial.begin(9600);
   Serial.println("DHT11 TEST PROGRAM ");
@@ -83,77 +95,96 @@ void setup() {
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   // Print a message to the LCD.
-  lcd.print("hello, world!");
+  lcd.clear();
   delay(1000);
 }
 
 void loop() {
+  lcd.clear();
   Serial.println("\n");
   int chk = DHT11.read(DHT11PIN);
-  float temp = 0.0;
-  float humi = 0.0; 
   Serial.print("Read sensor: ");
+  lcd.setCursor(14,0);
   switch (chk)
   {
     case DHTLIB_OK: 
-		Serial.println("OK"); 
+		Serial.println("OK");
+                lcd.print("OK");
 		break;
     case DHTLIB_ERROR_CHECKSUM: 
 		Serial.println("Checksum error"); 
+                lcd.print("CS");
 		break;
     case DHTLIB_ERROR_TIMEOUT: 
 		Serial.println("Time out error"); 
+                lcd.print("TO");
 		break;
     default: 
 		Serial.println("Unknown error"); 
+                lcd.print("UE");
 		break;
   }
+  lcd.setCursor(0,0);
+  lcd.print("CNT: ");
+  lcd.print(Counter);
+  ++Counter;
 
-  temp = DHT11.temperature;
-  humi = DHT11.humidity;
+  TempAct = DHT11.temperature;
+  HumiAct = DHT11.humidity;
+  if (TempAct > TempMax) TempMax = TempAct;
+  if (TempAct < TempMin) TempMin = TempAct;
+  if (HumiAct > HumiMax) HumiMax = HumiAct;
+  if (HumiAct < HumiMin) HumiMin = HumiAct;
+  
+// /*  
+  if (Toggle == true) {
+    lcd.setCursor(0,1);
+    lcd.print("T:");
+    lcd.print((int)TempAct);
+    lcd.setCursor(4,1);
+    lcd.print(" H:");
+    lcd.print((int)TempMax);
+    lcd.setCursor(10,1);
+    lcd.print(" L:");
+    lcd.print((int)TempMin);
+    Toggle = false;
+    }
+  else {
+    lcd.setCursor(0,1);
+    lcd.print("H:");
+    lcd.print((int)HumiAct);
+    lcd.setCursor(4,1);
+    lcd.print(" H:");
+    lcd.print((int)HumiMax);
+    lcd.setCursor(10,1);
+    lcd.print(" L:");
+    lcd.print((int)HumiMin);
+    Toggle = true;
+    }
+// */
   
   Serial.print("Humidity (%): ");
-  Serial.println((float)humi, 2);
+  Serial.print((float)HumiAct, 2);
+  Serial.print(" Humidity Max (%): ");
+  Serial.print((float)HumiMax, 2);
+  Serial.print(" Humidity Min (%): ");
+  Serial.println((float)HumiMin, 2);
 
   Serial.print("Temperature (°C): ");
-  Serial.println((float)temp, 2);
+  Serial.print((float)TempAct, 2);
+  Serial.print(" Temperature Max (°C): ");
+  Serial.print((float)TempMax, 2);
+  Serial.print(" Temperature Min (°C): ");
+  Serial.println((float)TempMin, 2);
 
   Serial.print("Dew Point (°C): ");
-  Serial.println(dewPoint(temp, humi));
+  Serial.println(dewPoint(TempAct, HumiAct));
 
   Serial.print("Dew PointFast (°C): ");
-  Serial.println(dewPointFast(temp, humi));
+  Serial.println(dewPointFast(TempAct, HumiAct));
 
-
-  // scroll 13 positions (string length) to the left
-  // to move it offscreen left:
-  for (int positionCounter = 0; positionCounter < 13; positionCounter++) {
-    // scroll one position left:
-    lcd.scrollDisplayLeft();
-    // wait a bit:
-    delay(150);
-  }
-
-  // scroll 29 positions (string length + display length) to the right
-  // to move it offscreen right:
-  for (int positionCounter = 0; positionCounter < 29; positionCounter++) {
-    // scroll one position right:
-    lcd.scrollDisplayRight();
-    // wait a bit:
-    delay(150);
-  }
- 
-    // scroll 16 positions (display length + string length) to the left
-    // to move it back to center:
-  for (int positionCounter = 0; positionCounter < 16; positionCounter++) {
-    // scroll one position left:
-    lcd.scrollDisplayLeft();
-    // wait a bit:
-    delay(150);
-  }
- 
   // delay at the end of the full loop:
-  //delay(1000);
+  delay(2000);
 
 }
 
